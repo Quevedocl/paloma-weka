@@ -12,9 +12,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Paloma Weka</title>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<!-- Backend: proyecto de Supabase con tablas profiles y letters, RLS y Realtime ya configurados. -->
 <style>
 :root{
   --madera:#4a3120; --madera2:#33210f; --perg:#ecd9a9; --perg2:#dcc088; --tinta:#3a2716;
@@ -63,15 +62,19 @@ button{font:inherit;cursor:pointer}
 .fila>*{flex:1}
 .top{display:flex;justify-content:space-between;align-items:flex-start}
 .aviso{font-size:14px;background:rgba(142,43,28,.12);border-left:3px solid var(--lacre);padding:8px 10px;border-radius:0 6px 6px 0}
-
+ 
+.fcol{display:flex;flex-direction:column;gap:18px}
 /* Buzón */
 #lista{display:flex;flex-direction:column;gap:12px;flex:1}
 .carta{
-  display:flex;align-items:center;gap:14px;text-align:left;width:100%;
+  position:relative;display:flex;align-items:center;gap:14px;text-align:left;width:100%;
   background:linear-gradient(160deg,#f3e3b8,#e2c891);border:1px solid #b8955a;border-radius:6px 14px 6px 14px;
   padding:14px 16px;color:var(--tinta);box-shadow:2px 4px 10px var(--sombra);
 }
 .carta:nth-child(even){transform:rotate(.7deg)}.carta:nth-child(odd){transform:rotate(-.6deg)}
+.carta.destacada{border:2px solid #c78b3c;background:linear-gradient(160deg,#faedcb,#e6ce9a)}
+.estrella-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:4px;margin-left:auto;opacity:.4;transition:.2s}
+.estrella-btn.activo{opacity:1;transform:scale(1.1)}
 .lacre{
   flex:none;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--lacre2),var(--lacre));
   box-shadow:inset 0 -3px 5px #0004,0 2px 4px #0005;display:grid;place-items:center;color:#f5d9a8;font-family:'Caveat',cursive;font-size:22px;
@@ -80,7 +83,7 @@ button{font:inherit;cursor:pointer}
 .carta small{opacity:.7;font-size:14px}
 .vacio{margin:auto;text-align:center;opacity:.75}
 .vacio svg{width:110px;opacity:.6;margin-bottom:8px}
-
+ 
 /* Redacción */
 .hoja{
   flex:1;display:flex;flex-direction:column;background:#f6e9c4;border:1px solid #b8955a;border-radius:4px;
@@ -93,6 +96,11 @@ button{font:inherit;cursor:pointer}
 }
 .hoja textarea:focus{background-color:transparent}
 
+/* Controles de Estilo de Carta */
+.controles-estilo{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.controles-estilo select{font-size:15px;padding:4px;border-radius:4px;border:1px solid #b8955a;background:#fff8e1}
+.controles-estilo button{background:#e2c891;border:1px solid #b8955a;border-radius:4px;padding:4px 10px;font-weight:bold}
+ 
 /* Lectura */
 .pergamino{
   flex:1;position:relative;padding:34px 26px 28px;overflow-y:auto;min-height:0;
@@ -106,7 +114,7 @@ button{font:inherit;cursor:pointer}
 @keyframes abrir{from{transform:scaleY(.05);opacity:0}to{transform:scaleY(1);opacity:1}}
 .pergamino .de{font-family:'Caveat',cursive;font-size:30px;margin-bottom:14px;color:var(--lacre)}
 .pergamino .texto{font-family:'Caveat',cursive;font-size:29px;line-height:1.3;white-space:pre-wrap;word-break:break-word}
-
+ 
 select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color:var(--tinta);background:rgba(255,248,225,.55);border:none;border-bottom:2px solid var(--madera);padding:8px 4px;border-radius:4px 4px 0 0}
 .usr{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed #b8955a}
 .usr>div{flex:1;min-width:0}
@@ -114,8 +122,8 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
 .usr small{display:block;opacity:.7;font-size:14px;overflow:hidden;text-overflow:ellipsis}
 .usr .btn{padding:7px 14px;font-size:16px;flex:none}
 .aviso.ok{background:rgba(60,110,50,.14);border-left-color:#3c6e32}
-
-/* Vuelo */
+ 
+/* Vuelo General de Salida */
 #vuelo{position:absolute;inset:0;z-index:20;display:none;background:rgba(236,217,169,.9);overflow:hidden}
 #vuelo.on{display:block}
 #vuelo svg{position:absolute;left:0;bottom:0;width:150px;animation:vuela 2.6s cubic-bezier(.45,.05,.55,.95) forwards}
@@ -126,9 +134,37 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
   100%{transform:translate(470px,-720px) rotate(-18deg) scale(.6)}
 }
 @keyframes aparece{0%{opacity:0}25%,70%{opacity:1}100%{opacity:0}}
+
+/* Animación de Entrada y Acciones de Paloma en Lectura */
+#paloma-lectura{
+  position:absolute;top:10px;left:10px;width:90px;z-index:10;pointer-events:none;
+  transition:transform 0.8s ease, opacity 0.8s ease;
+}
+#paloma-lectura.acercandose{
+  animation:acercarPaloma 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards;
+}
+#paloma-lectura.guardando{
+  animation:guardarPaloma 0.9s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+#paloma-lectura.se-va{
+  animation:puntoFugaPaloma 0.9s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes acercarPaloma{
+  0%{transform:translate(-100px,-100px) scale(0.3) rotate(-20deg); opacity:0;}
+  100%{transform:translate(0,0) scale(1) rotate(0deg); opacity:1;}
+}
+@keyframes guardarPaloma{
+  0%{transform:translate(0,0) scale(1); opacity:1;}
+  100%{transform:translate(0,-150px) scale(0.5); opacity:0;}
+}
+@keyframes puntoFugaPaloma{
+  0%{transform:translate(0,0) scale(1) rotate(0deg); opacity:1;}
+  100%{transform:translate(180px,250px) scale(0.05) rotate(45deg); opacity:0;}
+}
+
 .ala{transform-origin:52px 50px;animation:aletea .32s ease-in-out infinite alternate}
 @keyframes aletea{from{transform:rotate(-16deg) scaleY(1)}to{transform:rotate(14deg) scaleY(.55)}}
-
+ 
 #toast{
   position:absolute;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;z-index:30;pointer-events:none;
   background:var(--madera2);color:#f5e3b8;padding:11px 20px;border-radius:999px;font-size:17px;white-space:nowrap;transition:.35s;
@@ -139,29 +175,45 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
 </head>
 <body>
 <div id="app">
-
+ 
   <!-- 1. Acceso -->
   <section class="screen" id="s-auth">
     <div style="margin-top:5vh"><h1>Paloma Weka</h1></div>
     <p>Cartas que llegan volando. Se leen y se van.</p>
-    <div id="campoNombre" hidden><label for="nombre">Tu nombre</label><input id="nombre" maxlength="30" autocomplete="name"></div>
-    <div><label for="email">Correo</label><input id="email" type="email" autocomplete="email" inputmode="email"></div>
-    <div><label for="clave">Contraseña</label><input id="clave" type="password" minlength="6" autocomplete="current-password"></div>
-    <div class="aviso" id="msg" hidden></div>
-    <button class="btn" id="entrar">Entrar</button>
-    <button class="link" id="cambiarModo">¿No tienes cuenta? Regístrate</button>
+    <form id="formAuth" class="fcol" novalidate>
+      <div id="campoNombre" hidden><label for="nombre">Tu nombre</label><input id="nombre" name="name" maxlength="30" autocomplete="name"></div>
+      <div><label for="email">Correo</label><input id="email" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off"></div>
+      <div><label for="clave">Contraseña</label><input id="clave" name="password" type="password" minlength="6" autocomplete="current-password"></div>
+      <div class="aviso" id="msg" hidden></div>
+      <button class="btn" id="entrar" type="submit">Entrar</button>
+      <button class="link" id="cambiarModo" type="button">¿No tienes cuenta? Regístrate</button>
+      <button class="link" id="olvide" type="button">Olvidé mi contraseña</button>
+    </form>
   </section>
-
+ 
+  <!-- Nueva contraseña -->
+  <section class="screen" id="s-nueva">
+    <div style="margin-top:5vh"><h2>Nueva contraseña</h2></div>
+    <p>Elige la contraseña con la que entrarás desde ahora.</p>
+    <form id="formNueva" class="fcol" novalidate>
+      <div><label for="nuevoUsuario">Correo</label><input id="nuevoUsuario" name="username" type="email" autocomplete="username" readonly></div>
+      <div><label for="clave2">Nueva contraseña</label><input id="clave2" name="password" type="password" minlength="6" autocomplete="new-password"></div>
+      <div class="aviso" id="msg2" hidden></div>
+      <button class="btn" type="submit">Guardar contraseña</button>
+      <button class="link" id="cancelarClave" type="button">Cancelar</button>
+    </form>
+  </section>
+ 
   <!-- 2. Buzón -->
   <section class="screen" id="s-buzon">
     <div class="top">
       <div><h1 id="saludo">Buzón</h1><p class="muted" id="sub"></p></div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="link" id="btnAdmin" hidden>Usuarios</button><button class="link" id="avisos">Activar avisos</button><button class="link" id="salir">Salir</button></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="link" id="btnAdmin" hidden>Usuarios</button><button class="link" id="avisos">Activar avisos</button><button class="link" id="cambiarClave">Cambiar contraseña</button><button class="link" id="salir">Salir</button></div>
     </div>
     <div id="lista"></div>
     <button class="btn" id="irEscribir">Te mando una carta</button>
   </section>
-
+ 
   <!-- 3. Redacción -->
   <section class="screen" id="s-escribir">
     <div><label for="para">Para</label><select id="para"></select></div>
@@ -171,10 +223,35 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
       <button class="btn" id="enviar">Enviar con la paloma</button>
     </div>
   </section>
-
+ 
   <!-- 4. Lectura -->
   <section class="screen" id="s-leer" style="padding:20px 0">
     <div class="pergamino" id="perg">
+      <!-- Paloma en la esquina superior izquierda sujetando la carta -->
+      <svg id="paloma-lectura" viewBox="0 0 150 110" fill="none">
+        <rect x="126" y="52" width="20" height="14" rx="1.5" fill="#f6e9c4" stroke="#8e2b1c" stroke-width="1.5" transform="rotate(12 136 59)"/>
+        <path d="M126 52l10 7 10-7" stroke="#8e2b1c" stroke-width="1.2" transform="rotate(12 136 59)"/>
+        <g class="ala"><path d="M52 50C36 18 14 12 6 16c10 6 12 22 30 40z" fill="#8a7a66" stroke="#3a2716" stroke-width="2"/></g>
+        <path d="M8 74l-6 10 24-4z" fill="#a8977f" stroke="#3a2716" stroke-width="2"/>
+        <ellipse cx="66" cy="66" rx="42" ry="22" fill="#d8ccb8" stroke="#3a2716" stroke-width="2.5"/>
+        <circle cx="104" cy="52" r="13" fill="#d8ccb8" stroke="#3a2716" stroke-width="2.5"/>
+        <path d="M115 50l14 5-14 5z" fill="#c78b3c" stroke="#3a2716" stroke-width="2"/>
+        <circle cx="106" cy="49" r="2.4" fill="#3a2716"/>
+        <path d="M50 68c14 8 34 8 50-2" stroke="#3a2716" stroke-width="1.5" opacity=".5"/>
+      </svg>
+      
+      <!-- Controles de personalización de fuente y tamaño -->
+      <div class="controles-estilo">
+        <select id="selFuente" title="Tipo de letra">
+          <option value="'Caveat', cursive">Manuscrita (Caveat)</option>
+          <option value="'IM Fell English', Georgia, serif">Clásica (IM Fell)</option>
+          <option value="'Special Elite', monospace">Máquina de escribir</option>
+          <option value="'Quicksand', sans-serif">Moderna (Quicksand)</option>
+        </select>
+        <button id="btnMenosText" title="Reducir letra">A-</button>
+        <button id="btnMasText" title="Aumentar letra">A+</button>
+      </div>
+
       <div class="de" id="de"></div>
       <div class="texto" id="cuerpo"></div>
     </div>
@@ -183,14 +260,14 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
       <button class="btn" id="seVa">Se va</button>
     </div>
   </section>
-
+ 
   <!-- 5. Usuarios (admin) -->
   <section class="screen" id="s-admin">
     <h2>Usuarios registrados</h2>
     <div id="usuarios"></div>
     <button class="btn suave" id="volverAdmin" style="margin-top:auto">Volver</button>
   </section>
-
+ 
   <div id="vuelo" aria-hidden="true">
     <svg id="paloma" viewBox="0 0 150 110" fill="none">
       <rect x="126" y="52" width="20" height="14" rx="1.5" fill="#f6e9c4" stroke="#8e2b1c" stroke-width="1.5" transform="rotate(12 136 59)"/>
@@ -207,28 +284,51 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
   </div>
   <div id="toast" role="status"></div>
 </div>
-
+ 
 <script>
 const SUPABASE_URL = 'https://ouwffudalkzycsrfsziw.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91d2ZmdWRhbGt6eWNzcmZzeml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMTM1NzcsImV4cCI6MjEwNTc4OTU3N30.1J7VmvHCiBF_1KbG1krZsFj4e6fhKtQ3b5zMSMCqMPY'; // clave pública (anon)
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91d2ZmdWRhbGt6eWNzcmZzeml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMTM1NzcsImV4cCI6MjEwNTc4OTU3N30.1J7VmvHCiBF_1KbG1krZsFj4e6fhKtQ3b5zMSMCqMPY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
-
+ 
 let user = null, profile = null, letters = [], current = null, lastCount = null, modo = 'login', canal = null;
+let currentFontSize = 29; // Tamaño inicial de texto en lectura
+
+// Generador de sonido de notificación estilo Twitter (sin derechos de autor)
+function reproducirSonidoTwitter() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    // Notas ascendentes tipo chirp sutil
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08); // A5
+    
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+  } catch (e) {}
+}
 
 function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
 let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2800); }
 const fecha = iso => new Date(iso).toLocaleString('es-CL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
-function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function msg(t, ok){ const m=$('#msg'); m.textContent=t; m.hidden=!t; m.classList.toggle('ok', !!ok); }
+function msg(t, ok, id){ const m=$(id || '#msg'); m.textContent=t; m.hidden=!t; m.classList.toggle('ok', !!ok); }
 function traducir(e){
   if (/already registered/i.test(e)) return 'Ese correo ya está registrado. Inicia sesión.';
+  if (/different from the old/i.test(e)) return 'Elige una contraseña distinta a la anterior.';
   if (/password/i.test(e)) return 'La contraseña debe tener al menos 6 caracteres.';
   if (/invalid.*email|email.*invalid/i.test(e)) return 'Ese correo no es válido.';
-  if (/rate limit/i.test(e)) return 'Demasiados intentos. Espera unos minutos.';
   return 'No se pudo completar: ' + e;
 }
-
+ 
 /* ---- Acceso ---- */
 function setModo(m){
   modo = m; msg('');
@@ -236,9 +336,11 @@ function setModo(m){
   $('#entrar').textContent = m === 'registro' ? 'Crear mi cuenta' : 'Entrar';
   $('#cambiarModo').textContent = m === 'registro' ? 'Ya tengo cuenta. Iniciar sesión' : '¿No tienes cuenta? Regístrate';
   $('#clave').autocomplete = m === 'registro' ? 'new-password' : 'current-password';
+  $('#olvide').hidden = m === 'registro';
 }
 $('#cambiarModo').onclick = () => setModo(modo === 'login' ? 'registro' : 'login');
-$('#entrar').onclick = async () => {
+$('#formAuth').onsubmit = async (ev) => {
+  ev.preventDefault();
   const email = $('#email').value.trim(), pass = $('#clave').value, name = $('#nombre').value.trim();
   if (!email || pass.length < 6) return msg('Escribe tu correo y una contraseña de al menos 6 caracteres.');
   const btn = $('#entrar'); btn.disabled = true; msg('');
@@ -258,9 +360,31 @@ $('#salir').onclick = async () => {
   try { const sub = await obtenerSub(); if (sub) await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); } catch (e) {}
   sb.auth.signOut();
 };
-
-// No hacer llamadas a Supabase dentro del callback: se difieren con setTimeout
+ 
+/* ---- Recuperar contraseña ---- */
+let recuperando = false;
+$('#olvide').onclick = async () => {
+  const email = $('#email').value.trim();
+  if (!email) return msg('Escribe tu correo arriba y vuelve a tocar "Olvidé mi contraseña".');
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  if (error) return msg(traducir(error.message));
+  msg('Si ese correo está registrado, te enviamos un enlace para crear una nueva contraseña.', true);
+};
+$('#cambiarClave').onclick = () => { $('#nuevoUsuario').value = user.email; $('#clave2').value = ''; msg('', false, '#msg2'); show('s-nueva'); };
+ $('#cancelarClave').onclick = () => { recuperando = false; if (user && profile) show('s-buzon'); else sb.auth.signOut(); };
+$('#formNueva').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const pass = $('#clave2').value;
+  if (pass.length < 6) return msg('La contraseña debe tener al menos 6 caracteres.', false, '#msg2');
+  const { error } = await sb.auth.updateUser({ password: pass });
+  if (error) return msg(traducir(error.message), false, '#msg2');
+  recuperando = false; history.replaceState(null, '', location.pathname);
+  setTimeout(iniciar, 0);
+};
+ 
 sb.auth.onAuthStateChange((ev, session) => {
+  if (ev === 'PASSWORD_RECOVERY' && session) { recuperando = true; user = session.user; $('#nuevoUsuario').value = session.user.email; show('s-nueva'); return; }
+  if (recuperando) return;
   if (session && session.user) {
     if (!user || user.id !== session.user.id) { user = session.user; setTimeout(iniciar, 0); }
   } else {
@@ -270,7 +394,7 @@ sb.auth.onAuthStateChange((ev, session) => {
   }
 });
 sb.auth.getSession().then(({ data }) => { if (!data.session) show('s-auth'); });
-
+ 
 /* ---- Inicio ---- */
 async function iniciar(){
   for (let i = 0; i < 3 && !profile; i++) {
@@ -287,14 +411,20 @@ function suscribir(){
     .on('postgres_changes', { event:'*', schema:'public', table:'letters', filter:'recipient_id=eq.' + user.id }, () => cargar())
     .subscribe();
 }
-
+ 
 /* ---- Buzón ---- */
 async function cargar(){
   const { data, error } = await sb.from('letters').select('*')
     .eq('recipient_id', user.id).eq('dismissed', false).order('timestamp', { ascending:false });
   if (error) return toast('No se pudieron cargar las cartas');
-  letters = data;
-  if (lastCount !== null && letters.length > lastCount) toast('Llegó una paloma con una carta');
+  
+  // Ordenar para mostrar primero las destacadas
+  letters = (data || []).sort((a, b) => (b.starred === true) - (a.starred === true));
+  
+  if (lastCount !== null && letters.length > lastCount) {
+    reproducirSonidoTwitter();
+    toast('¡Llegó una paloma con una carta!');
+  }
   lastCount = letters.length;
   pintar();
 }
@@ -307,31 +437,83 @@ function pintar(){
     return;
   }
   letters.forEach(l => {
-    const b = document.createElement('button');
-    b.className = 'carta';
-    b.innerHTML = '<span class="lacre"></span><span><b></b><small></small></span>';
-    b.querySelector('.lacre').textContent = (l.sender_name || '?').charAt(0).toUpperCase();
-    b.querySelector('b').textContent = 'Carta de ' + l.sender_name;
-    b.querySelector('small').textContent = fecha(l.timestamp);
-    b.onclick = () => abrir(l);
+    const b = document.createElement('div');
+    b.className = 'carta' + (l.starred ? ' destacada' : '');
+    b.innerHTML = `
+      <span class="lacre">${(l.sender_name || '?').charAt(0).toUpperCase()}</span>
+      <div style="flex:1;cursor:pointer"><b>Carta de ${l.sender_name}</b><small>${fecha(l.timestamp)}</small></div>
+      <button class="estrella-btn ${l.starred ? 'activo' : ''}" title="Destacar mensaje">⭐</button>
+    `;
+    
+    // Abrir carta al hacer clic en el contenido
+    b.querySelector('div').onclick = () => abrir(l);
+    
+    // Botón para destacar mensaje
+    b.querySelector('.estrella-btn').onclick = async (e) => {
+      e.stopPropagation();
+      const nuevoEstado = !l.starred;
+      const { error } = await sb.from('letters').update({ starred: nuevoEstado }).eq('id', l.id);
+      if (!error) {
+        l.starred = nuevoEstado;
+        pintar();
+        toast(nuevoEstado ? 'Carta destacada guardada' : 'Carta desmarcada');
+      }
+    };
+    
     box.appendChild(b);
   });
 }
+
 function abrir(l){
   current = l;
   $('#de').textContent = 'De parte de ' + l.sender_name;
-  $('#cuerpo').textContent = l.text;
+  const cuerpoEl = $('#cuerpo');
+  cuerpoEl.textContent = l.text;
+  cuerpoEl.style.fontFamily = $('#selFuente').value;
+  cuerpoEl.style.fontSize = currentFontSize + 'px';
+  
   const p = $('#perg'); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = '';
+  
+  // Activar animación de la paloma acercándose desde la esquina superior izquierda
+  const palomaLectura = $('#paloma-lectura');
+  palomaLectura.className = '';
+  void palomaLectura.offsetWidth;
+  palomaLectura.classList.add('acercandose');
+  
   show('s-leer');
 }
-$('#cerrar').onclick = () => show('s-buzon');
-$('#seVa').onclick = async () => {
-  if (!current) return;
-  const { error } = await sb.from('letters').update({ dismissed:true }).eq('id', current.id);
-  if (error) return toast('No se pudo archivar');
-  current = null; show('s-buzon'); await cargar(); toast('La carta se fue volando');
+
+// Controles de tipografía y tamaño de letra
+$('#selFuente').onchange = (e) => { $('#cuerpo').style.fontFamily = e.target.value; };
+$('#btnMasText').onclick = () => { currentFontSize = Math.min(42, currentFontSize + 3); $('#cuerpo').style.fontSize = currentFontSize + 'px'; };
+$('#btnMenosText').onclick = () => { currentFontSize = Math.max(18, currentFontSize - 3); $('#cuerpo').style.fontSize = currentFontSize + 'px'; };
+
+$('#cerrar').onclick = async () => {
+  // Animación de la paloma guardando el mensaje
+  const palomaLectura = $('#paloma-lectura');
+  palomaLectura.className = '';
+  void palomaLectura.offsetWidth;
+  palomaLectura.classList.add('guardando');
+  
+  setTimeout(() => show('s-buzon'), 800);
 };
 
+$('#seVa').onclick = async () => {
+  if (!current) return;
+  
+  // Animación de punto de fuga hacia el centro
+  const palomaLectura = $('#paloma-lectura');
+  palomaLectura.className = '';
+  void palomaLectura.offsetWidth;
+  palomaLectura.classList.add('se-va');
+
+  setTimeout(async () => {
+    const { error } = await sb.from('letters').update({ dismissed:true }).eq('id', current.id);
+    if (error) return toast('No se pudo archivar');
+    current = null; show('s-buzon'); await cargar(); toast('La carta se fue volando');
+  }, 850);
+};
+ 
 /* ---- Redacción ---- */
 $('#irEscribir').onclick = async () => {
   const { data, error } = await sb.from('profiles').select('id,name').neq('id', user.id).order('name');
@@ -346,13 +528,13 @@ $('#enviar').onclick = async () => {
   const text = $('#texto').value.trim(), to = $('#para').value;
   if (!text) return toast('Escribe algo antes de enviar');
   const btn = $('#enviar'); btn.disabled = true;
-  const { error } = await sb.from('letters').insert({ recipient_id: to, text });
+  const { error } = await sb.from('letters').insert({ recipient_id: to, text, starred: false });
   if (error) { btn.disabled = false; return toast('No se pudo enviar. Intenta de nuevo'); }
   const v = $('#vuelo'), svg = $('#paloma');
   v.classList.add('on'); svg.style.animation = 'none'; void svg.getBoundingClientRect(); svg.style.animation = '';
   setTimeout(() => { v.classList.remove('on'); btn.disabled = false; show('s-buzon'); toast('La paloma ya salió'); }, 2700);
 };
-
+ 
 /* ---- Administración ---- */
 $('#btnAdmin').onclick = async () => { show('s-admin'); await cargarUsuarios(); };
 $('#volverAdmin').onclick = () => show('s-buzon');
@@ -378,14 +560,14 @@ async function cargarUsuarios(){
     box.appendChild(r);
   });
 }
-
-/* ---- Avisos push (iPhone: iOS 16.4+, app agregada a inicio) ---- */
+ 
+/* ---- Avisos push ---- */
 const VAPID_PUBLIC = 'BBkPfHuC6MLA0AEZjrFjtwTODVO9uF5Mtg4ZoR8iK85ddEb0dOe2sE0bVPHWm6zaFyKOG-eMXgpvfYH97dBE6XA';
 const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const instalada = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 const soportaPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
-
+ 
 const b64 = s => { const r = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, c => c.charCodeAt(0)); };
 async function obtenerSub(){ if (!soportaPush) return null; const reg = await navigator.serviceWorker.ready; return reg.pushManager.getSubscription(); }
 async function guardarSub(sub){
@@ -421,7 +603,7 @@ $('#avisos').onclick = async () => {
     await guardarSub(sub); toast('Avisos activados'); refrescarAvisos();
   } catch (e) { toast('No se pudieron activar los avisos'); }
 };
-
+ 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && user && profile) cargar(); });
 </script>
 </body>
