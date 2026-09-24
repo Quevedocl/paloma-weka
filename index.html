@@ -348,14 +348,29 @@ function lluviaPlumas(){
 }
  
 // Sonido de aviso: dos tonos (Web Audio API). El audio se desbloquea con el primer toque del usuario (requisito de iOS/Android)
-let audioCtx = null;
+let audioCtx = null, bufAviso = null;
+// SONIDO PERSONALIZADO: sube un archivo con este nombre junto a index.html (mp3, ogg o wav). Si no existe, se usan los dos tonos por defecto.
+const SONIDO_ARCHIVO = 'notif.mp3';
+async function cargarSonido(){
+  bufAviso = false;
+  try {
+    const r = await fetch(SONIDO_ARCHIVO); if (!r.ok) return;
+    bufAviso = await audioCtx.decodeAudioData(await r.arrayBuffer());
+  } catch (e) { bufAviso = false; }
+}
 const desbloquearAudio = () => {
-  try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (bufAviso === null) cargarSonido();
+  } catch (e) {}
 };
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, desbloquearAudio, { passive: true }));
 function reproducirSonidoTwitter() {
   try {
-    desbloquearAudio(); const t = audioCtx.currentTime;
+    desbloquearAudio();
+    if (bufAviso) { const src = audioCtx.createBufferSource(); src.buffer = bufAviso; src.connect(audioCtx.destination); src.start(); return; }
+    const t = audioCtx.currentTime;
     [[880, 0], [1318.5, 0.11]].forEach(([f, d]) => {
       const o = audioCtx.createOscillator(), g = audioCtx.createGain();
       o.type = 'sine'; o.frequency.value = f;
