@@ -1,6 +1,13 @@
 // Service worker de Paloma Weka: recibe los avisos push y abre la app al tocarlos
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+const CACHE = 'paloma-v3';
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', 'icon-192.png', 'icon-512.png', 'manifest.webmanifest']).catch(() => {}))); self.skipWaiting(); });
+// Red primero para la app; si no hay conexión, se abre la última copia guardada
+self.addEventListener('fetch', e => {
+  const u = new URL(e.request.url);
+  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
+  e.respondWith(fetch(e.request).then(r => { const cp = r.clone(); caches.open(CACHE).then(c => c.put(e.request, cp)); return r; }).catch(() => caches.match(e.request).then(r => r || caches.match('./'))));
+});
+self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 
 self.addEventListener('push', e => {
   let d = {};
