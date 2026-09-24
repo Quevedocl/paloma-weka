@@ -326,9 +326,8 @@ let user = null, profile = null, letters = [], current = null, lastCount = null,
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const leer = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-let currentFontSize = +leer('pw_size') || 29; // Tamaño de texto en lectura (se recuerda)
+let currentFontSize = +leer('pw_size') || 29;
 let posar = null;
-// Tipografías disponibles: clave (se guarda en la carta) → [nombre, CSS, factor de tamaño]
 const FUENTES = {
   manuscrita:['Manuscrita',"'Caveat', cursive",1], cursiva:['Cursiva elegante',"'Dancing Script', cursive",1.05], caligrafia:['Caligrafía',"'Great Vibes', cursive",1.3],
   infantil:['Infantil',"'Indie Flower', cursive",.95], informal:['Informal',"'Kalam', cursive",.95], imprenta:['Letra de imprenta',"'Patrick Hand', cursive",1],
@@ -347,37 +346,31 @@ function lluviaPlumas(){
   }
 }
  
-// Sonido de aviso: dos tonos (Web Audio API). El audio se desbloquea con el primer toque del usuario (requisito de iOS/Android)
-let audioCtx = null, bufAviso = null;
-// SONIDO PERSONALIZADO: sube un archivo con este nombre junto a index.html (mp3, ogg o wav). Si no existe, se usan los dos tonos por defecto.
-const SONIDO_ARCHIVO = 'notif.mp3';
-async function cargarSonido(){
-  bufAviso = false;
-  try {
-    const r = await fetch(SONIDO_ARCHIVO); if (!r.ok) return;
-    bufAviso = await audioCtx.decodeAudioData(await r.arrayBuffer());
-  } catch (e) { bufAviso = false; }
-}
+// Reproductor directo usando el archivo notif.mp3 de la raíz con respaldo de sintetizador
+let audioCtx = null;
 const desbloquearAudio = () => {
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    if (bufAviso === null) cargarSonido();
   } catch (e) {}
 };
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, desbloquearAudio, { passive: true }));
+
 function reproducirSonidoTwitter() {
   try {
     desbloquearAudio();
-    if (bufAviso) { const src = audioCtx.createBufferSource(); src.buffer = bufAviso; src.connect(audioCtx.destination); src.start(); return; }
-    const t = audioCtx.currentTime;
-    [[880, 0], [1318.5, 0.11]].forEach(([f, d]) => {
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t + d);
-      g.gain.exponentialRampToValueAtTime(0.18, t + d + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.38);
-      o.connect(g); g.connect(audioCtx.destination); o.start(t + d); o.stop(t + d + 0.42);
+    const audio = new Audio('notif.mp3');
+    audio.play().catch(e => {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      [[880, 0], [1318.5, 0.11]].forEach(([f, d]) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t + d);
+        g.gain.exponentialRampToValueAtTime(0.18, t + d + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.38);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t + d); o.stop(t + d + 0.42);
+      });
     });
   } catch (e) {}
 }
@@ -436,7 +429,7 @@ $('#olvide').onclick = async () => {
   msg('Si ese correo está registrado, te enviamos un enlace para crear una nueva contraseña.', true);
 };
 $('#cambiarClave').onclick = () => { $('#nuevoUsuario').value = user.email; $('#clave2').value = ''; msg('', false, '#msg2'); show('s-nueva'); };
- $('#cancelarClave').onclick = () => { recuperando = false; if (user && profile) show('s-buzon'); else sb.auth.signOut(); };
+$('#cancelarClave').onclick = () => { recuperando = false; if (user && profile) show('s-buzon'); else sb.auth.signOut(); };
 $('#formNueva').onsubmit = async (ev) => {
   ev.preventDefault();
   const pass = $('#clave2').value;
@@ -535,13 +528,11 @@ function abrir(l){
   $('#de').textContent = 'De parte de ' + l.sender_name;
   const cuerpoEl = $('#cuerpo');
   cuerpoEl.textContent = l.text;
-  // La carta se abre con la letra que eligió quien la escribió (el lector puede cambiarla)
   fuenteLect = FUENTES[l.font] ? l.font : 'moderna'; tamLect = l.font_size || 29;
   $('#selFuente').value = fuenteLect; aplicarLetra(cuerpoEl, fuenteLect, tamLect);
   
   const p = $('#perg'); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = '';
   
-  // Llegada: la paloma entra desde la esquina superior izquierda, se acerca y se posa
   $('#escena').className = 'escena';
   const pl = $('#paloma-lectura');
   pl.className = ''; void pl.offsetWidth; pl.classList.add('acercandose');
@@ -550,22 +541,18 @@ function abrir(l){
   show('s-leer');
 }
  
-// Controles de tipografía y tamaño de letra
 let fuenteLect = 'moderna', tamLect = 29;
 $('#selFuente').onchange = e => { fuenteLect = e.target.value; aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
 $('#btnMasText').onclick = () => { tamLect = Math.min(44, tamLect + 3); aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
 $('#btnMenosText').onclick = () => { tamLect = Math.max(16, tamLect - 3); aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
-// Papel de lectura: pergamino / claro / noche
 const TEMAS = ['', 'tema-claro', 'tema-noche'], ICONOS = ['☀️', '🌙', '📜'];
 let tema = +leer('pw_tema') || 0;
 function aplicarTema(){ const p = $('#perg'); p.classList.remove('tema-claro', 'tema-noche'); if (TEMAS[tema]) p.classList.add(TEMAS[tema]); $('#btnTema').textContent = ICONOS[tema]; }
 $('#btnTema').onclick = () => { tema = (tema + 1) % 3; guardar('pw_tema', tema); aplicarTema(); };
 aplicarTema();
-// Paloma decorativa en la pantalla de acceso
 { const d = $('#paloma-lectura').cloneNode(true); d.removeAttribute('id'); d.setAttribute('class', 'paloma-auth'); d.removeAttribute('style'); $('#s-auth h1').parentNode.prepend(d); }
  
 $('#cerrar').onclick = () => {
-  // Guardar: la paloma se eleva llevándose la carta
   const es = $('#escena'); clearTimeout(posar);
   $('#paloma-lectura').className = ''; es.classList.add('guardando');
   setTimeout(() => { show('s-buzon'); es.className = 'escena'; }, 1100);
@@ -578,7 +565,6 @@ $('#seVa').onclick = async () => {
     if (error) return toast('No se pudo devolver la carta');
     current = null; show('s-buzon'); await cargar(); return toast('La carta volvió al buzón');
   }
-  // Se va: el pergamino se cierra y la paloma vuela al centro de la pantalla reduciéndose (punto de fuga)
   const es = $('#escena'), pl = $('#paloma-lectura');
   const app = $('#app').getBoundingClientRect(), r = pl.getBoundingClientRect();
   clearTimeout(posar); pl.className = '';
