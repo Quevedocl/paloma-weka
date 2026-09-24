@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Paloma Weka</title>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Dancing+Script:wght@500;700&family=Great+Vibes&family=Indie+Flower&family=Kalam:wght@400;700&family=Patrick+Hand&family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@500;700&family=Special+Elite&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -170,6 +170,35 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
 }
 #toast.on{transform:translate(-50%,0);opacity:1}
 @media(prefers-reduced-motion:reduce){#vuelo svg,.ala,.pergamino,.escena,#paloma-lectura{animation-duration:.01s!important}}
+ 
+/* ===== Mejoras estéticas ===== */
+#app::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/><feColorMatrix values='0 0 0 0 .3 0 0 0 0 .2 0 0 0 0 .1 0 0 0 .45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+h1{text-shadow:1px 2px 0 rgba(255,244,210,.7),2px 4px 8px rgba(74,49,32,.25)}
+.btn{transition:transform .12s,filter .2s}.btn:hover{filter:brightness(1.08)}
+.paloma-auth{width:120px;display:block;margin:0 auto 4px;animation:flota 3.2s ease-in-out infinite}
+.paloma-auth .ala{animation:aletea .9s ease-in-out infinite alternate}
+.vacio svg{animation:flota 3s ease-in-out infinite}
+@keyframes flota{50%{transform:translateY(-9px) rotate(-2deg)}}
+.filtros{display:flex;gap:8px;overflow-x:auto;flex:none;padding-bottom:2px}
+.chip{background:transparent;border:2px solid var(--madera);color:var(--tinta);border-radius:999px;padding:6px 14px;font-size:16px;white-space:nowrap;transition:.2s}
+.chip.on{background:var(--madera);color:#f5e3b8}
+.carta{animation:entra .5s calc(var(--i,0) * 70ms) both;transition:box-shadow .2s}
+@keyframes entra{from{opacity:0;translate:0 18px}}
+.carta.nueva{box-shadow:0 0 0 2px rgba(142,43,28,.4),2px 4px 10px var(--sombra)}
+.carta.nueva .lacre{animation:latido 1.6s ease-in-out infinite}
+.carta.nueva b::after{content:' · nueva';font-size:18px;color:var(--lacre)}
+@keyframes latido{50%{transform:scale(1.14)}}
+.pergamino .texto{animation:tinta 1.3s 1.5s both}
+@keyframes tinta{from{opacity:0;filter:blur(3px)}}
+.pergamino.tema-claro{background:linear-gradient(#fbf7ea,#f1ead6)}
+.pergamino.tema-noche{background:linear-gradient(#2b2219,#1b140d);color:#ecd9a9}
+.pergamino.tema-noche .de{color:#f0a290}
+.controles-estilo select{flex:1;min-width:0;width:auto}
+.controles-estilo button{min-width:38px}
+.contador{text-align:right;font-size:14px;opacity:.6;padding-top:4px}.contador.alto{color:var(--lacre);opacity:1}
+.pluma{position:absolute;top:-30px;z-index:25;pointer-events:none;opacity:.85;animation:cae 4s ease-in forwards}
+@keyframes cae{to{transform:translate(var(--x),105vh) rotate(var(--r))}}
 </style>
 </head>
 <body>
@@ -209,6 +238,7 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
       <div><h1 id="saludo">Buzón</h1><p class="muted" id="sub"></p></div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="link" id="btnAdmin" hidden>Usuarios</button><button class="link" id="avisos">Activar avisos</button><button class="link" id="cambiarClave">Cambiar contraseña</button><button class="link" id="salir">Salir</button></div>
     </div>
+    <div class="filtros" id="filtros"><button class="chip on" data-f="todas">Buzón</button><button class="chip" data-f="destacadas">⭐ Destacadas</button><button class="chip" data-f="archivo">Archivo</button></div>
     <div id="lista"></div>
     <button class="btn" id="irEscribir">Te mando una carta</button>
   </section>
@@ -216,7 +246,11 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
   <!-- 3. Redacción -->
   <section class="screen" id="s-escribir">
     <div><label for="para">Para</label><select id="para"></select></div>
-    <div class="hoja"><textarea id="texto" maxlength="1500" placeholder="Escribe aquí…" aria-label="Texto de la carta"></textarea></div>
+    <div class="hoja">
+      <div class="controles-estilo"><select id="selFuenteEscr" title="Tipo de letra de tu carta"></select><button id="eMenos" title="Reducir letra">A-</button><button id="eMas" title="Aumentar letra">A+</button></div>
+      <textarea id="texto" maxlength="1500" placeholder="Escribe aquí…" aria-label="Texto de la carta"></textarea>
+      <div class="contador" id="contador">0 / 1500</div>
+    </div>
     <div class="fila">
       <button class="btn suave" id="cancelar">Volver</button>
       <button class="btn" id="enviar">Enviar con la paloma</button>
@@ -231,14 +265,10 @@ select{width:100%;font:inherit;font-size:22px;font-family:'Caveat',cursive;color
       
       <!-- Controles de personalización de fuente y tamaño -->
       <div class="controles-estilo">
-        <select id="selFuente" title="Tipo de letra">
-          <option value="'Caveat', cursive">Manuscrita (Caveat)</option>
-          <option value="'IM Fell English', Georgia, serif">Clásica (IM Fell)</option>
-          <option value="'Special Elite', monospace">Máquina de escribir</option>
-          <option value="'Quicksand', sans-serif">Moderna (Quicksand)</option>
-        </select>
+        <select id="selFuente" title="Tipo de letra"></select>
         <button id="btnMenosText" title="Reducir letra">A-</button>
         <button id="btnMasText" title="Aumentar letra">A+</button>
+        <button id="btnTema" title="Cambiar papel">☀️</button>
       </div>
  
       <div class="de" id="de"></div>
@@ -298,6 +328,24 @@ const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const leer = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 let currentFontSize = +leer('pw_size') || 29; // Tamaño de texto en lectura (se recuerda)
 let posar = null;
+// Tipografías disponibles: clave (se guarda en la carta) → [nombre, CSS, factor de tamaño]
+const FUENTES = {
+  manuscrita:['Manuscrita',"'Caveat', cursive",1], cursiva:['Cursiva elegante',"'Dancing Script', cursive",1.05], caligrafia:['Caligrafía',"'Great Vibes', cursive",1.3],
+  infantil:['Infantil',"'Indie Flower', cursive",.95], informal:['Informal',"'Kalam', cursive",.95], imprenta:['Letra de imprenta',"'Patrick Hand', cursive",1],
+  antigua:['Clásica antigua',"'IM Fell English', Georgia, serif",.95], literaria:['Literaria',"'Cormorant Garamond', Georgia, serif",1.15],
+  maquina:['Máquina de escribir',"'Special Elite', monospace",.8], moderna:['Moderna',"'Quicksand', sans-serif",.85]
+};
+const opcionesFuente = Object.entries(FUENTES).map(([k, f]) => `<option value="${k}">${f[0]}</option>`).join('');
+$('#selFuente').innerHTML = opcionesFuente; $('#selFuenteEscr').innerHTML = opcionesFuente;
+const aplicarLetra = (el, k, tam) => { const f = FUENTES[k] || FUENTES.moderna; el.style.fontFamily = f[1]; el.style.fontSize = Math.round(tam * f[2]) + 'px'; };
+function lluviaPlumas(){
+  const app = $('#app');
+  for (let i = 0; i < 9; i++) {
+    const p = document.createElement('span'); p.className = 'pluma'; p.textContent = '🪶';
+    p.style.cssText = `left:${Math.random() * 90}%;--x:${Math.random() * 80 - 40}px;--r:${Math.random() * 360}deg;animation-delay:${Math.random() * 1.2}s;font-size:${16 + Math.random() * 14}px`;
+    app.appendChild(p); setTimeout(() => p.remove(), 5400);
+  }
+}
  
 // Sonido de aviso: dos tonos (Web Audio API). El audio se desbloquea con el primer toque del usuario (requisito de iOS/Android)
 let audioCtx = null;
@@ -417,62 +465,64 @@ function suscribir(){
 /* ---- Buzón ---- */
 async function cargar(){
   const { data, error } = await sb.from('letters').select('*')
-    .eq('recipient_id', user.id).eq('dismissed', false).order('timestamp', { ascending:false });
+    .eq('recipient_id', user.id).order('timestamp', { ascending:false });
   if (error) return toast('No se pudieron cargar las cartas');
   
-  // Ordenar para mostrar primero las destacadas
   letters = (data || []).sort((a, b) => (b.starred === true) - (a.starred === true));
-  
-  if (lastCount !== null && letters.length > lastCount) {
-    reproducirSonidoTwitter();
-    toast('¡Llegó una paloma con una carta!');
+  const activas = letters.filter(l => !l.dismissed).length;
+  if (lastCount !== null && activas > lastCount) {
+    reproducirSonidoTwitter(); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {}
+    lluviaPlumas(); toast('¡Llegó una paloma con una carta!');
   }
-  lastCount = letters.length;
+  lastCount = activas;
   pintar();
 }
+let filtro = 'todas';
+const vistas = new Set(JSON.parse(leer('pw_vistas') || '[]'));
+const rel = iso => { const m = Math.round((Date.now() - new Date(iso)) / 60000); if (m < 1) return 'ahora mismo'; if (m < 60) return `hace ${m} min`; const h = Math.round(m / 60); return h < 24 ? `hace ${h} h` : fecha(iso); };
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => { filtro = c.dataset.f; document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === c)); pintar(); });
+const VACIO = {
+  todas: 'El buzón está vacío.<br>Cuando alguien te escriba, la paloma llegará aquí.',
+  destacadas: 'Aún no destacaste ninguna carta.<br>Toca la ⭐ de una carta para guardarla aquí.',
+  archivo: 'Aquí quedan las cartas que se fueron.<br>Puedes releerlas o devolverlas al buzón.'
+};
 function pintar(){
   $('#saludo').textContent = 'Hola, ' + profile.name;
-  $('#sub').textContent = letters.length ? (letters.length === 1 ? 'Tienes 1 carta sin archivar' : `Tienes ${letters.length} cartas sin archivar`) : '';
+  const activas = letters.filter(l => !l.dismissed), nuevas = activas.filter(l => !vistas.has(l.id)).length;
+  $('#sub').textContent = activas.length ? `${activas.length} ${activas.length === 1 ? 'carta' : 'cartas'} en el buzón` + (nuevas ? ` · ${nuevas} sin leer` : '') : '';
+  try { if (navigator.setAppBadge) nuevas ? navigator.setAppBadge(nuevas) : navigator.clearAppBadge(); } catch (e) {}
+  const vis = letters.filter(l => filtro === 'archivo' ? l.dismissed : filtro === 'destacadas' ? l.starred : !l.dismissed);
   const box = $('#lista'); box.innerHTML = '';
-  if (!letters.length) {
-    box.innerHTML = '<div class="vacio"><svg viewBox="0 0 150 110" fill="none"><ellipse cx="66" cy="66" rx="42" ry="22" stroke="#3a2716" stroke-width="3"/><circle cx="104" cy="52" r="13" stroke="#3a2716" stroke-width="3"/><path d="M115 50l14 5-14 5z" stroke="#3a2716" stroke-width="3"/></svg><p>El buzón está vacío.<br>Cuando alguien te escriba, la paloma llegará aquí.</p></div>';
-    return;
-  }
-  letters.forEach(l => {
+  if (!vis.length) { box.innerHTML = `<div class="vacio"><svg viewBox="0 0 150 110" fill="none"><ellipse cx="66" cy="66" rx="42" ry="22" stroke="#3a2716" stroke-width="3"/><circle cx="104" cy="52" r="13" stroke="#3a2716" stroke-width="3"/><path d="M115 50l14 5-14 5z" stroke="#3a2716" stroke-width="3"/></svg><p>${VACIO[filtro]}</p></div>`; return; }
+  vis.forEach((l, i) => {
     const b = document.createElement('div');
-    b.className = 'carta' + (l.starred ? ' destacada' : '');
+    b.className = 'carta' + (l.starred ? ' destacada' : '') + (!l.dismissed && !vistas.has(l.id) ? ' nueva' : '');
+    b.style.setProperty('--i', Math.min(i, 8));
     b.innerHTML = `
       <span class="lacre">${esc((l.sender_name || '?').charAt(0).toUpperCase())}</span>
-      <div style="flex:1;cursor:pointer"><b>Carta de ${esc(l.sender_name)}</b><small>${fecha(l.timestamp)}</small></div>
-      <button class="estrella-btn ${l.starred ? 'activo' : ''}" title="Destacar mensaje">⭐</button>
-    `;
-    
-    // Abrir carta al hacer clic en el contenido
+      <div style="flex:1;cursor:pointer"><b>Carta de ${esc(l.sender_name)}</b><small>${rel(l.timestamp)}</small></div>
+      <button class="estrella-btn ${l.starred ? 'activo' : ''}" title="Destacar carta">⭐</button>`;
     b.querySelector('div').onclick = () => abrir(l);
-    
-    // Botón para destacar mensaje
     b.querySelector('.estrella-btn').onclick = async (e) => {
       e.stopPropagation();
-      const nuevoEstado = !l.starred;
-      const { error } = await sb.from('letters').update({ starred: nuevoEstado }).eq('id', l.id);
-      if (!error) {
-        l.starred = nuevoEstado;
-        pintar();
-        toast(nuevoEstado ? 'Carta destacada guardada' : 'Carta desmarcada');
-      }
+      const nuevo = !l.starred;
+      const { error } = await sb.from('letters').update({ starred: nuevo }).eq('id', l.id);
+      if (!error) { l.starred = nuevo; pintar(); toast(nuevo ? 'Carta destacada' : 'Carta desmarcada'); }
     };
-    
     box.appendChild(b);
   });
 }
  
 function abrir(l){
   current = l;
+  vistas.add(l.id); guardar('pw_vistas', JSON.stringify([...vistas].slice(-300)));
+  $('#seVa').textContent = l.dismissed ? 'Devolver al buzón' : 'Se va'; $('#cerrar').textContent = l.dismissed ? 'Volver' : 'Guardar';
   $('#de').textContent = 'De parte de ' + l.sender_name;
   const cuerpoEl = $('#cuerpo');
   cuerpoEl.textContent = l.text;
-  cuerpoEl.style.fontFamily = $('#selFuente').value;
-  cuerpoEl.style.fontSize = currentFontSize + 'px';
+  // La carta se abre con la letra que eligió quien la escribió (el lector puede cambiarla)
+  fuenteLect = FUENTES[l.font] ? l.font : 'moderna'; tamLect = l.font_size || 29;
+  $('#selFuente').value = fuenteLect; aplicarLetra(cuerpoEl, fuenteLect, tamLect);
   
   const p = $('#perg'); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = '';
   
@@ -486,11 +536,18 @@ function abrir(l){
 }
  
 // Controles de tipografía y tamaño de letra
-const fGuardada = leer('pw_font');
-if (fGuardada) { $('#selFuente').value = fGuardada; if (!$('#selFuente').value) $('#selFuente').selectedIndex = 0; }
-$('#selFuente').onchange = (e) => { $('#cuerpo').style.fontFamily = e.target.value; guardar('pw_font', e.target.value); };
-$('#btnMasText').onclick = () => { currentFontSize = Math.min(42, currentFontSize + 3); $('#cuerpo').style.fontSize = currentFontSize + 'px'; guardar('pw_size', currentFontSize); };
-$('#btnMenosText').onclick = () => { currentFontSize = Math.max(18, currentFontSize - 3); $('#cuerpo').style.fontSize = currentFontSize + 'px'; guardar('pw_size', currentFontSize); };
+let fuenteLect = 'moderna', tamLect = 29;
+$('#selFuente').onchange = e => { fuenteLect = e.target.value; aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
+$('#btnMasText').onclick = () => { tamLect = Math.min(44, tamLect + 3); aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
+$('#btnMenosText').onclick = () => { tamLect = Math.max(16, tamLect - 3); aplicarLetra($('#cuerpo'), fuenteLect, tamLect); };
+// Papel de lectura: pergamino / claro / noche
+const TEMAS = ['', 'tema-claro', 'tema-noche'], ICONOS = ['☀️', '🌙', '📜'];
+let tema = +leer('pw_tema') || 0;
+function aplicarTema(){ const p = $('#perg'); p.classList.remove('tema-claro', 'tema-noche'); if (TEMAS[tema]) p.classList.add(TEMAS[tema]); $('#btnTema').textContent = ICONOS[tema]; }
+$('#btnTema').onclick = () => { tema = (tema + 1) % 3; guardar('pw_tema', tema); aplicarTema(); };
+aplicarTema();
+// Paloma decorativa en la pantalla de acceso
+{ const d = $('#paloma-lectura').cloneNode(true); d.removeAttribute('id'); d.setAttribute('class', 'paloma-auth'); d.removeAttribute('style'); $('#s-auth h1').parentNode.prepend(d); }
  
 $('#cerrar').onclick = () => {
   // Guardar: la paloma se eleva llevándose la carta
@@ -501,6 +558,11 @@ $('#cerrar').onclick = () => {
  
 $('#seVa').onclick = async () => {
   if (!current) return;
+  if (current.dismissed) {
+    const { error } = await sb.from('letters').update({ dismissed: false }).eq('id', current.id);
+    if (error) return toast('No se pudo devolver la carta');
+    current = null; show('s-buzon'); await cargar(); return toast('La carta volvió al buzón');
+  }
   // Se va: el pergamino se cierra y la paloma vuela al centro de la pantalla reduciéndose (punto de fuga)
   const es = $('#escena'), pl = $('#paloma-lectura');
   const app = $('#app').getBoundingClientRect(), r = pl.getBoundingClientRect();
@@ -523,15 +585,28 @@ $('#irEscribir').onclick = async () => {
   if (!data.length) return toast('Aún no hay nadie más registrado');
   const sel = $('#para'); sel.innerHTML = '';
   data.forEach(u => { const o = document.createElement('option'); o.value = u.id; o.textContent = u.name; sel.appendChild(o); });
-  $('#texto').value = ''; show('s-escribir'); setTimeout(() => $('#texto').focus(), 50);
+  $('#texto').value = leer('pw_borrador') || ''; $('#texto').oninput(); aplicarEscr(); show('s-escribir'); setTimeout(() => $('#texto').focus(), 50);
 };
+let fuenteEsc = leer('pw_efont'), tamEsc = +leer('pw_esize') || 30;
+if (!FUENTES[fuenteEsc]) fuenteEsc = 'manuscrita';
+function aplicarEscr(){
+  const ta = $('#texto'), f = FUENTES[fuenteEsc], fs = Math.round(tamEsc * f[2]), lh = Math.round(fs * 1.35);
+  ta.style.fontFamily = f[1]; ta.style.fontSize = fs + 'px'; ta.style.lineHeight = lh + 'px';
+  ta.style.backgroundImage = `repeating-linear-gradient(transparent 0 ${lh - 1}px,rgba(120,80,30,.28) ${lh - 1}px ${lh}px)`;
+  $('#selFuenteEscr').value = fuenteEsc;
+}
+$('#selFuenteEscr').onchange = e => { fuenteEsc = e.target.value; guardar('pw_efont', fuenteEsc); aplicarEscr(); };
+$('#eMas').onclick = () => { tamEsc = Math.min(44, tamEsc + 3); guardar('pw_esize', tamEsc); aplicarEscr(); };
+$('#eMenos').onclick = () => { tamEsc = Math.max(16, tamEsc - 3); guardar('pw_esize', tamEsc); aplicarEscr(); };
+$('#texto').oninput = () => { const n = $('#texto').value.length; $('#contador').textContent = n + ' / 1500'; $('#contador').classList.toggle('alto', n > 1350); guardar('pw_borrador', $('#texto').value); };
 $('#cancelar').onclick = () => show('s-buzon');
 $('#enviar').onclick = async () => {
   const text = $('#texto').value.trim(), to = $('#para').value;
   if (!text) return toast('Escribe algo antes de enviar');
   const btn = $('#enviar'); btn.disabled = true;
-  const { error } = await sb.from('letters').insert({ recipient_id: to, text, starred: false });
+  const { error } = await sb.from('letters').insert({ recipient_id: to, text, starred: false, font: fuenteEsc, font_size: tamEsc });
   if (error) { btn.disabled = false; return toast('No se pudo enviar. Intenta de nuevo'); }
+  guardar('pw_borrador', ''); $('#texto').value = '';
   const v = $('#vuelo'), svg = $('#paloma');
   v.classList.add('on'); svg.style.animation = 'none'; void svg.getBoundingClientRect(); svg.style.animation = '';
   setTimeout(() => { v.classList.remove('on'); btn.disabled = false; show('s-buzon'); toast('La paloma ya salió'); }, 2700);
@@ -610,4 +685,3 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && us
 </script>
 </body>
 </html>
- 
